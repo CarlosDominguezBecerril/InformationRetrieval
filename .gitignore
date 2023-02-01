@@ -1,0 +1,32 @@
+# Datasets
+*.json
+*.jsonl
+*.tsv
+*.csv
+*.txt
+*.xlsx
+*.zip
+*.pth
+*.slurm
+*.log
+*.sh
+transformers_cache
+latest
+events.out.*
+*.bin
+*.db
+
+!baseline.json
+!prompts.json
+!results.xlsx
+
+# Python
+__pycache__
+
+# Visual Studio Code # 
+.vscode/* 
+!.vscode/settings.json 
+!.vscode/tasks.json 
+!.vscode/launch.json 
+!.vscode/extensions.json 
+.history
