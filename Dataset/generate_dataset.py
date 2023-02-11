@@ -79,7 +79,7 @@ if __name__ == "__main__":
             split_dataset(save_name, ratio, f"./output/query_generation_format/{save_name}/final_outputs/{model_name.replace('/', '_')}/", f"./output/query_generation_format/{save_name}/final_outputs/{model_name.replace('/', '_')}/", "query_generation_format", use_indexes_file=True, indexes_file_path=f"./output/dpr_format/{dataset_name}/dev_indexes.json")
         
         if generate_negatives:
-            # mine_negatives(dataset_name, f"./output/dpr_format/{dataset_name}/", "dpr_format")
-            # mine_negatives(dataset_name, f"./output/contriever_format/{dataset_name}/", "contriever_format")
+            mine_negatives(dataset_name, f"./output/dpr_format/{dataset_name}/", "dpr_format")
+            mine_negatives(dataset_name, f"./output/contriever_format/{dataset_name}/", "contriever_format")
             mine_negatives(save_name, f"./output/query_generation_format/{save_name}/final_outputs/{model_name.replace('/', '_')}/", "query_generation_format")
     

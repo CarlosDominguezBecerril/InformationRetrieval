@@ -170,7 +170,7 @@ if __name__ == "__main__":
     prompt_name = "instruct-gpt"
     save_name = f"{dataset_name}_do_sample=True_p=0.9_prompt={prompt_name}" # only if input_type is "query_generation"
     input_type = ["dpr", "contriever", "query_generation"][2]
-    model_name = "instruct-gpt"# only if input_type is "query_generation"
+    model_name = "instruct-gpt" # only if input_type is "query_generation"
     epochs = 30
     batch_size = 128
     grad_acc_steps = 8
