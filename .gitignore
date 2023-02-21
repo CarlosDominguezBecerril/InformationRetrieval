@@ -15,6 +15,7 @@ latest
 events.out.*
 *.bin
 *.db
+*.png
 
 !baseline.json
 !prompts.json
