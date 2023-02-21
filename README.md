@@ -7,7 +7,7 @@ The repository pertains to the field of Information Retrieval and focuses on the
 - Generation of questions through an unsupervised approach.
 - Training of a dense passage retrieval system (DPR) using the generated questions as a basis. (Using haystack https://github.com/deepset-ai/haystack)
 - Training of the contriever system using the generated questions. (https://github.com/facebookresearch/contriever).
-- Evaluation of the system using the benchmarked evaluation method BEIR.
+- Evaluation of the system using the benchmarked evaluation method BEIR. (https://github.com/beir-cellar/beir)
 
 
 Further information about the project can be found at: https://drive.google.com/file/d/1JGQH_SvFMhNlcYqrM3beMTCaWJznO7j8/view?usp=sharing
@@ -18,52 +18,56 @@ Note: The code makes use of Slurm to simplify the workflow of the project.
 
 ## Question Generation
 
-You can generate the dataset by executing the following command inside the 'dataset' folder:
+To get started, download the datasets by executing the following command:
+
 ```
-python generate_dataset.py
+python3 utils/download_datasets.py
+```
+
+You can generate the dataset by executing the following command inside the 'DatasetGeneration' folder:
+
+```
+python generate_unsupervised_dataset.py
 ```
 
 Important parameters in the script include:
+- method: the values are "cropping" or "LLM". Cropping stands for contriever generation method and LLM for large language model.
+- dataset name: name of the dataset to generate questions for.
+- create dev: whether to create a dev dataset or not.
+- dev_rato: how many documents to use from the corpus to create the dev split. (float. 0.2 -> 20% of the documents)
+- question_per_document: how many questions to create per document.
 
-- dataset name: name of the dataset to generate questions for
-- gpus: specify the number of GPUs to use
-- prompt name: "prompt" used to generate the questions. (See prompts.json for the different available options. If the prompt is "is_external," it uses the OpenAI system.)
-- model name: name of the model to use (HuggingFace)
- -shards: number of shards to create when generating the dataset (this is used to parallelize the generation process across different GPUs)
-- mode: 'manual' or 'auto,' if manual it uses the 'shards' variable, otherwise it creates shards based on the dataset size.
+This parameters are only useful when using LLM method
+- gpus: specify the number of GPUs to use.
+- prompt name: "prompt" used to generate the questions. (See prompts.json for the different available options).
+- model name: name of the model to use (HuggingFace).
+- shard size: size of the shard to create the shard of the dataset (this is used to parallelize the generation process across different GPUs).
 
-To get started, download the datasets. The easiest way is to use the BEIR GitHub repository (https://github.com/beir-cellar/beir). Then, include the datasets as follows:
+
+If the system stops during the generation of the dataset using the LLM method, you can run the script again to recover from where it was left.
+
+After generating the dataset run the following command (update the necessary parameters).
 
 ```
-
-\ Dataset
-    \ original_datasets
-        \ arguana
-            \ qrels
-                - test.tsv
-            - corpus.jsonl
-            - queries.jsonl
-        \ climate-fever
-            ...
-        \ msmarco
-            ...
+python3 postprocessing.py
 ```
 
-To generate the dataset, you first need to set up your dataset in the DPR format (https://github.com/facebookresearch/DPR). The easiest way is to create a script in the "convert_to_dpr_format" folder. (We provide two scripts, for NFCorpus and Scifact datasets, as examples.)
+### (OTHER) Using your own dataset
 
-Three datasets will be generated: the original dataset in the DPR format (original dataset modified), a dataset generated using the contriever generation method (in the DPR format), and a dataset generated using an LLM in an unsupervised way (in the DPR format).
+To use your dataset own dataset use the BEIR format. You will need to create a file called "corpus.jsonl" inside the "datasets/my_dataset" folder.
 
-If the system stops during the generation of the dataset using the LLM, you can run the script again to recover from where it was left.
+The format should be one dictionary per line with the following keys:
 
-After generating the three datasets, run the script again to join the one generated using the LLM (remember they are in shards).
+"_id" -> Unique id of the document
 
-### Other
+"title" -> Title of the document
 
-If the "ratio" is greater than 0, the training dataset will be split into two (train and dev).
+"text" -> Document
 
-If "generative_negatives" is set, hard negatives will be added using BM25. (Avoid running the code twice to avoid creating two hard negatives.)
 
 # Training
+
+CURRENTLY CLEANING THE CODE TO MAKE IT EASIER TO USE. IT MIGHT NOT WORK THE FOLLOWING.
 
 Once the dataset is created, training the system is easy.
 
