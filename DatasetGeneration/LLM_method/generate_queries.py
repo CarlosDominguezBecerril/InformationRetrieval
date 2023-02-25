@@ -186,12 +186,15 @@ if __name__ == "__main__":
     
     optimize = False
     if args.optimization.lower() == "true":
-        args.optimization = True
+        optimize = True
+    args.optimization = optimize
 
     do_sample = False
     if args.do_sample.lower() == "true":
-        args.do_sample = True
-    print("Optimize 8-bit:", args.optimization)
-    print("Do sample:", args.do_sample)
+        do_sample = True
+    args.do_sample = do_sample
+
+    print("Optimize 8-bit:", args.optimization, type(args.optimization))
+    print("Do sample:", args.do_sample, type(args.do_sample))
     
     load_model_and_prepare_data(args)
