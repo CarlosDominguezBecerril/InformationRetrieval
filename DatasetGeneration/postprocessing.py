@@ -7,6 +7,10 @@ if __name__ == "__main__":
     save_folder_supervised = "supervised_datasets"
     save_folder_unsupervised = "unsupervised_datasets"
 
+    use_dpr_format = False # True -> Uses DPR format. False -> Beir format
+
+    splits = ["train"] # Possible values: "train", "dev", "test"
+
     method = "cropping" # Possible: [cropping, LLM, supervised]
     dataset_name = "scifact"
     download_datasets.download_dataset(dataset_name) # You can download all the datasets by calling "download_all_datasets()"
@@ -37,6 +41,7 @@ if __name__ == "__main__":
         "dataset_name": dataset_name,
         "model_name": model_name.replace("/", "_"),
         "exclude_answers": exclude_answers,
+        "splits": splits
     }
 
-    convert_dataset.convert_to_dpr_format(args)
+    convert_dataset.convert(args, use_dpr_format)

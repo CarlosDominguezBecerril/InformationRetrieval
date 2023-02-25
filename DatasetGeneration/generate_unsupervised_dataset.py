@@ -23,13 +23,15 @@ if __name__ == "__main__":
     method = "LLM" # Possible: cropping or LLM
     dataset_name = "msmarco"
     download_datasets.download_dataset(dataset_name) # You can download all the datasets by calling "download_all_datasets()"
-    create_dev = True
+    create_dev = False
     dev_ratio = 0.2 # We generate a dev dataset that is equal to 20% of the whole corpus.
     questions_per_document = 1
     
     # Update these parameters if you are using the LLM method
-    batch_size = 64
-    gpus = 1
+    batch_size = 64 # 48
+    batch_size_decrease_in_error = 16 # If there is an OOM (Out of memory) decrease the batch size by this value. Max 3 attempts
+
+    gpus = 4
     shard_size = 100000 # We shard the dataset is slices of "shard_size" to parallelize in several GPUs and avoid OOM issues sometimes. Sometimes the shard size is bigger / smaller than what you put here to divide the dataset evenly.
 
     print_every = 10
@@ -37,7 +39,7 @@ if __name__ == "__main__":
     p = 0.9
     optimization = False # Apply 8-bit optimization
 
-    model_name = "facebook/opt-350m"
+    model_name = "facebook/opt-2.7b"
 
     prompts_path = "LLM_method/prompts.json"
     prompt = "standard"
@@ -59,6 +61,7 @@ if __name__ == "__main__":
        "dev_ratio": dev_ratio,
        "questions_per_document": questions_per_document,
        "batch_size": batch_size,
+       "batch_size_decrease_in_error": batch_size_decrease_in_error,
        "gpus": gpus,
        "shard_size": shard_size,
        "print_every": print_every,

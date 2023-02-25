@@ -20,11 +20,11 @@ def preprocess_output(string, start_point):
     first_new_line = string.find("\n") 
     return string[:first_new_line].strip()
 
-def generate_questions(args, shard_id, model, tokenizer, prompt_info):
+def generate_questions(args, shard_id, model, tokenizer, prompt_info, batch_size):
     torch.cuda.empty_cache()
 
     ds = DocumentStore(f"{os.path.join(os.path.dirname(args.save_path), 'shards', args.split)}/shard_{shard_id}.json")
-    dl = DataLoader(ds, batch_size=args.batch_size, num_workers=8, shuffle=False)
+    dl = DataLoader(ds, batch_size=batch_size, num_workers=8, shuffle=False)
 
     output_path = os.path.join(args.save_path, args.split, "unsupervised_dataset_sharded")
     output_dataset = []
@@ -36,7 +36,6 @@ def generate_questions(args, shard_id, model, tokenizer, prompt_info):
 
     print(f"Output file: {output_path}")
     examples = 0
-    errors = 0
 
     for batch in dl:
 
@@ -47,12 +46,12 @@ def generate_questions(args, shard_id, model, tokenizer, prompt_info):
             minutes = diff.total_seconds() / 60
             print(f"Shard id: {shard_id}")
             print(f"Total difference in hours: {minutes / 60}", flush=True)
-            print(f"Progress: {examples}/{len(ds) // args.batch_size}", flush=True)
+            print(f"Progress: {examples}/{len(ds) // batch_size}", flush=True)
 
             diff = mid_time - prev_time
             minutes = diff.total_seconds() / 60
 
-            print(f"Expected_time: {((len(ds) // args.batch_size) * minutes / args.print_every) / 60} hours\n", flush=True)
+            print(f"Expected_time: {((len(ds) // batch_size) * minutes / args.print_every) / 60} hours\n", flush=True)
 
             prev_time = mid_time
 
@@ -84,9 +83,8 @@ def generate_questions(args, shard_id, model, tokenizer, prompt_info):
                     "document": outputs["document"][i],
                 })
         except Exception as e:
-            print(e)
-            print(examples)
-            errors += 1
+            print(f"ERROR: {e}", flush=True)
+            return None
 
         examples += 1
 
@@ -102,7 +100,7 @@ def generate_questions(args, shard_id, model, tokenizer, prompt_info):
     print(f'Total difference in minutes: {minutes}\n')
     print(f"End shard {shard_id}")
 
-    return minutes, errors
+    return minutes
 
 def load_model_and_prepare_data(args):
 
@@ -122,7 +120,15 @@ def load_model_and_prepare_data(args):
 
     for shard_id in list(map(int, args.shard_list)):
 
-        time, errors = generate_questions(args, shard_id, model, tokenizer, prompt_info)
+        time, batch_size = None, args.batch_size
+        for i in range(3):
+            time = generate_questions(args, shard_id, model, tokenizer, prompt_info, batch_size)
+            if time is None:
+                print(f"Error during inference. Decreasing batch size from {batch_size} to {batch_size - args.batch_size_decrease_in_error}", flush=True)
+                batch_size -= args.batch_size_decrease_in_error
+                batch_size = max(1, batch_size)
+            else:
+                break
 
         metadata_save_path = os.path.join(args.save_path, args.split, "metadata")
         metadata = {
@@ -135,11 +141,11 @@ def load_model_and_prepare_data(args):
             "time_start": str(datetime.now()),
             "time_end": str(datetime.now()),
             "time_in_minutes": time,
-            "errors": errors,
+            "errors": 1 if time is None else 0,
             "optimization": args.optimization,
             "do_sample": args.do_sample,
             "p": args.p,
-            "batch_size": args.batch_size,
+            "batch_size": batch_size,
             "prompt_name": args.prompt_name,
         }
 
@@ -154,6 +160,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_name", type=str)
     parser.add_argument("--model_name", type=str)
     parser.add_argument("--batch_size", type=int)
+    parser.add_argument("--batch_size_decrease_in_error", type=int)
     parser.add_argument("--print_every", type=int)
     parser.add_argument("--do_sample", type=str)
     parser.add_argument("--p", type=float)
@@ -170,6 +177,7 @@ if __name__ == "__main__":
     print("Dataset name:", args.dataset_name)
     print("Model name:", args.model_name)
     print("Batch size:", args.batch_size)
+    print("Batch size decrease in error:", args.batch_size_decrease_in_error)
     print("Print every:", args.print_every)
     print("p:", args.p)
     print("Prompt name:", args.prompt_name)

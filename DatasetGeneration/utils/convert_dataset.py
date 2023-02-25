@@ -3,6 +3,7 @@ import os
 import csv
 import glob
 from tqdm import tqdm
+import shutil
 
 def apply_template(dataset, question, positive_ctxs, answers="", negative_ctxs=[], hard_negative_ctxs=[]):
     # Check format here: https://github.com/facebookresearch/DPR
@@ -36,13 +37,10 @@ def join_datasets(args, split):
     
     return dataset
 
-
-def convert_unsupervised_to_dpr_format(args, split):
-
+def preprocess(args, split):
     # first join the datasets
     if args["method"] == "LLM":
         dataset_joined = join_datasets(args, split)
-        if dataset_joined == []: return
     else:
         if not os.path.exists(f"{args['save_path']}/{split}.json"):
             print(f"[{args['dataset_name']}][{split}] this split doesn't exist")
@@ -59,10 +57,88 @@ def convert_unsupervised_to_dpr_format(args, split):
             "title": c["title"],
         }
 
-    dataset = []
+    return dataset_joined, corpus
+
+def convert_unsupervised_to_beir_format(args, split):
+
+    dataset_joined, corpus = preprocess(args, split)
+
+    s = os.path.join(args["save_path"], "beir")
+    os.makedirs(s, exist_ok=True)
+
+    queries = []
+
+    if os.path.exists(f"{s}/queries.json"):
+        queries = json_utilities.read_json_file(f"{s}/queries.json")
+
+    
     empty = exclude_answers = not_found = 0
     document_key = "original_document" if args["method"] == "cropping" else "document"
 
+    split_content_path = os.path.join(args["save_path"], "beir", "qrels")
+    os.makedirs(split_content_path, exist_ok=True)
+    valid = 0
+    print(f"{split_content_path}/{split}.tsv")
+    with open(f"{split_content_path}/{split}.tsv", "w") as split_content:
+        split_content.write("query-id\tcorpus-id\tscore\n")
+        for example in tqdm(dataset_joined):
+            if len(example["query"]) == 0:
+                empty += 1
+                continue
+            elif example["query"].lower().strip() in args["exclude_answers"] and args["method"] == "LLM":
+                exclude_answers += 1
+                continue
+            elif example[document_key] not in corpus:
+                not_found += 1
+                continue
+
+            queries.append({
+                "_id": str(len(queries)),
+                "text": example["query"].strip()
+            })
+
+            valid += 1
+
+            split_content.write(f"{queries[-1]['_id']}\t{(corpus[example[document_key]]['_id'])}\t0\n")
+
+    info = {
+        "corpus_length": len(corpus),
+        "unsupervised_dataset_length_(without_postprocessing)": len(dataset_joined),
+        "unsupervised_dataset_length_(with_postprocessing)": valid,
+        "lost_questions_(all)": len(dataset_joined) - valid,
+        "lost_questions_(empty)": empty,
+        "lost_questions_(document_not_found):": not_found
+    }
+    if args["method"] == "LLM":
+        info["lost_questions_(same_prompt_answer)"] = exclude_answers,
+
+    print(f"[{args['dataset_name']}][{split}] Corpus length: {len(corpus)}")
+    print(f"[{args['dataset_name']}][{split}] Unsupervised dataset length (without postprocessing): {len(dataset_joined)}")
+    print(f"[{args['dataset_name']}][{split}] Unsupervised dataset length (with postprocessing): {valid}")
+    print(f"[{args['dataset_name']}][{split}] Lost questions (ALL): {len(dataset_joined) - valid}")
+    print(f"[{args['dataset_name']}][{split}] Lost questions (empty): {empty}")
+    print(f"[{args['dataset_name']}][{split}] Lost questions (document not found): {not_found}")
+
+    if args["method"] == "LLM":
+        info["lost_questions_(same_prompt_answer)"] = exclude_answers
+        print(f"[{args['dataset_name']}][{split}] Lost questions (same prompt answer): {exclude_answers}")
+
+    if len(corpus) != len(dataset_joined):
+        print("[ONLY FOR TRAIN SPLIT] If the number of queries is different from the dataset length there might be an error")
+
+    json_utilities.save_json_file(f"{split_content_path}/{split}_beir_info.json", info)
+    json_utilities.save_json_file(f"{s}/queries.json", queries) 
+        
+
+def convert_unsupervised_to_dpr_format(args, split):
+
+    dataset_joined, corpus = preprocess(args, split)
+
+    if dataset_joined == []: return
+
+    dataset = []
+    empty = exclude_answers = not_found = 0
+    document_key = "original_document" if args["method"] == "cropping" else "document"
     for example in tqdm(dataset_joined):
         if len(example["query"]) == 0:
             empty += 1
@@ -111,13 +187,15 @@ def convert_unsupervised_to_dpr_format(args, split):
     if len(corpus) != len(dataset_joined):
         print("[ONLY FOR TRAIN SPLIT] If the number of queries is different from the dataset length there might be an error")
 
-    json_utilities.save_json_file(f"{args['save_path']}/{split}_dpr_info.json", info)
-    json_utilities.save_json_file(f"{args['save_path']}/{split}_dpr.json", dataset)
+    s = os.path.join(args["save_path"], "dpr")
+    os.makedirs(s, exist_ok=True)
+    json_utilities.save_json_file(f"{s}/{split}_dpr_info.json", info)
+    json_utilities.save_json_file(f"{s}/{split}_dpr.json", dataset)
 
 
 def convert_supervised_to_dpr_format(args, split):
 
-    dataset_path = os.path.join(args["datasets_folder"], args["dataset_name"])
+    dataset_path = os.path.join(args["save_path"], args["dataset_name"])
 
     # Load the corpus, queries and the qrels
     corpus_list = json_utilities.read_jsonl_file(f"{dataset_path}/corpus.jsonl")
@@ -180,21 +258,31 @@ def convert_supervised_to_dpr_format(args, split):
     if len(qrels) != len(dataset):
         print("[ONLY FOR TRAIN SPLIT] If the number of queries is different from the dataset length there might be an error")
     
-    json_utilities.save_json_file(f"{args['save_path']}/{split}_dpr_info.json", info)
-    json_utilities.save_json_file(f"{args['save_path']}/{split}_dpr.json", dataset)
+    s = os.path.join(args["save_path"], "dpr")
+    os.makedirs(s, exist_ok=True)
 
-def convert_to_dpr_format(args):
-    for split in ["train", "dev", "test"]:
+    json_utilities.save_json_file(f"{s}/{split}_dpr_info.json", info)
+    json_utilities.save_json_file(f"{s}/{split}_dpr.json", dataset)
 
-        save_dataset_path = f"{args['save_path']}/{split}_dpr.json"
-        if os.path.exists(save_dataset_path):
-            print(f"[{args['dataset_name']}][{split}][{args['method']}]{'[' + args['model_name'] + ']' if args['method'] == 'LLM' else ''} dataset already exists. Path: {save_dataset_path}")
-            continue
+def convert(args, use_dpr_format=True):
 
+    for split in args["splits"]:
         if args["method"] == "supervised":
-            convert_supervised_to_dpr_format(args, split)
+            if use_dpr_format:
+                convert_supervised_to_dpr_format(args, split)
+            else:
+                print("The original dataset is already in BEIR format")
         else:
-            convert_unsupervised_to_dpr_format(args, split)
+            if use_dpr_format:
+                convert_unsupervised_to_dpr_format(args, split)
+            else:
+                convert_unsupervised_to_beir_format(args, split)
+
+    # Convert to jsonl only if using beir format and copy the corpus
+    if not use_dpr_format:
+        dst = os.path.join(args['save_path'], 'beir')
+        json_utilities.convert_json_to_jsonl(f"{dst}/queries.json")
+        shutil.copyfile(f"{os.path.join(args['datasets_folder'], args['dataset_name'])}/corpus.jsonl", f"{dst}/corpus.jsonl")
 
 
     

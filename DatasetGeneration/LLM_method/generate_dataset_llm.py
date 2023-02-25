@@ -42,6 +42,7 @@ srun python3 ./LLM_method/generate_queries.py \\
         --dataset_name {args["dataset_name"]} \\
         --model_name {args["model_name"]} \\
         --batch_size {args["batch_size"]} \\
+        --batch_size_decrease_in_error {args["batch_size_decrease_in_error"]} \\
         --print_every {args["print_every"]} \\
         --do_sample {args["do_sample"]} \\
         --p {args["p"]} \\

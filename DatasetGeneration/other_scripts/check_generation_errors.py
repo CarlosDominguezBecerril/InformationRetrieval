@@ -29,18 +29,23 @@ def check_errors(args):
                 shards.append(metadata['shard_id'])
 
         shards.sort()
-        print(f"We recommend to launch again the following checkpoints for LLM using {args['model_name']} and split {split}", shards)
-        if args["delete"]:
-            for shard_id in shards:
-                p = os.path.join(save_split_path, "unsupervised_dataset_sharded")
-                shard_path = f"{p}/shard_{shard_id}.json"
-                os.system(f"rm {shard_path}")
+        if len(shards) > 0:
+            print(f"We recommend to launch again the following checkpoints for LLM using {args['model_name']} and split {split}", shards)
+            if args["delete"]:
+                for shard_id in shards:
+                    p = os.path.join(save_split_path, "unsupervised_dataset_sharded")
+                    shard_path = f"{p}/shard_{shard_id}.json"
+                    os.system(f"rm {shard_path}")
+
+                    p = os.path.join(save_split_path, "metadata")
+                    metadata_path = f"{p}/metadata_{shard_id}.json"
+                    os.system(f"rm {metadata_path}")
 
 
 
 if __name__ == "__main__":
 
-    model_name = "facebook/opt-350m"
+    model_name = "facebook/opt-2.7b"
     dataset_name = "msmarco"
     save_folder = "unsupervised_datasets"
 
