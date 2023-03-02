@@ -68,21 +68,25 @@ def convert_unsupervised_to_beir_format(args, split):
 
     queries = []
 
+    # If exists read the all queries files in order to add new ones.
     if os.path.exists(f"{s}/queries.json"):
         queries = json_utilities.read_json_file(f"{s}/queries.json")
-
     
-    empty = exclude_answers = not_found = 0
+    empty = exclude_answers = not_found = repeated_documents = 0
     document_key = "original_document" if args["method"] == "cropping" else "document"
 
     split_content_path = os.path.join(args["save_path"], "beir", "qrels")
     os.makedirs(split_content_path, exist_ok=True)
     valid = 0
+    seen_documents = set()
     print(f"{split_content_path}/{split}.tsv")
     with open(f"{split_content_path}/{split}.tsv", "w") as split_content:
         split_content.write("query-id\tcorpus-id\tscore\n")
         for example in tqdm(dataset_joined):
-            if len(example["query"]) == 0:
+            if example[document_key] in seen_documents:
+                repeated_documents += 1
+                continue
+            elif len(example["query"]) == 0:
                 empty += 1
                 continue
             elif example["query"].lower().strip() in args["exclude_answers"] and args["method"] == "LLM":
@@ -97,6 +101,8 @@ def convert_unsupervised_to_beir_format(args, split):
                 "text": example["query"].strip()
             })
 
+            seen_documents.add(example[document_key])
+
             valid += 1
 
             split_content.write(f"{queries[-1]['_id']}\t{(corpus[example[document_key]]['_id'])}\t0\n")
@@ -106,9 +112,12 @@ def convert_unsupervised_to_beir_format(args, split):
         "unsupervised_dataset_length_(without_postprocessing)": len(dataset_joined),
         "unsupervised_dataset_length_(with_postprocessing)": valid,
         "lost_questions_(all)": len(dataset_joined) - valid,
+        "lost_questions_(%)": 100 - (valid / len(corpus) * 100),
+        "lost_questions_(repeated_documents)": repeated_documents,
         "lost_questions_(empty)": empty,
-        "lost_questions_(document_not_found):": not_found
+        "lost_questions_(document_not_found)": not_found,
     }
+
     if args["method"] == "LLM":
         info["lost_questions_(same_prompt_answer)"] = exclude_answers,
 
@@ -116,15 +125,14 @@ def convert_unsupervised_to_beir_format(args, split):
     print(f"[{args['dataset_name']}][{split}] Unsupervised dataset length (without postprocessing): {len(dataset_joined)}")
     print(f"[{args['dataset_name']}][{split}] Unsupervised dataset length (with postprocessing): {valid}")
     print(f"[{args['dataset_name']}][{split}] Lost questions (ALL): {len(dataset_joined) - valid}")
+    print(f"[{args['dataset_name']}][{split}] Lost questions (%): {100 - (valid / len(corpus) * 100)}")
+    print(f"[{args['dataset_name']}][{split}] Lost questions (Repeated documents): {repeated_documents}")
     print(f"[{args['dataset_name']}][{split}] Lost questions (empty): {empty}")
     print(f"[{args['dataset_name']}][{split}] Lost questions (document not found): {not_found}")
 
     if args["method"] == "LLM":
         info["lost_questions_(same_prompt_answer)"] = exclude_answers
         print(f"[{args['dataset_name']}][{split}] Lost questions (same prompt answer): {exclude_answers}")
-
-    if len(corpus) != len(dataset_joined):
-        print("[ONLY FOR TRAIN SPLIT] If the number of queries is different from the dataset length there might be an error")
 
     json_utilities.save_json_file(f"{split_content_path}/{split}_beir_info.json", info)
     json_utilities.save_json_file(f"{s}/queries.json", queries) 
@@ -137,10 +145,14 @@ def convert_unsupervised_to_dpr_format(args, split):
     if dataset_joined == []: return
 
     dataset = []
-    empty = exclude_answers = not_found = 0
+    empty = exclude_answers = not_found = repeated_documents = 0
+    seen_documents = set()
     document_key = "original_document" if args["method"] == "cropping" else "document"
     for example in tqdm(dataset_joined):
-        if len(example["query"]) == 0:
+        if example[document_key] in seen_documents:
+            repeated_documents += 1
+            continue
+        elif len(example["query"]) == 0:
             empty += 1
             continue
         elif example["query"].lower().strip() in args["exclude_answers"] and args["method"] == "LLM":
@@ -162,13 +174,17 @@ def convert_unsupervised_to_dpr_format(args, split):
             }], 
         ))
 
+        seen_documents.add(example[document_key])
+
     info = {
         "corpus_length": len(corpus),
         "unsupervised_dataset_length_(without_postprocessing)": len(dataset_joined),
         "unsupervised_dataset_length_(with_postprocessing)": len(dataset),
         "lost_questions_(all)": len(dataset_joined) - len(dataset),
+        "lost_questions_(%)": 100 - (len(dataset) / len(corpus) * 100),
+        "lost_questions_(repeated_documents)": repeated_documents,
         "lost_questions_(empty)": empty,
-        "lost_questions_(document_not_found):": not_found
+        "lost_questions_(document_not_found)": not_found,
     }
     if args["method"] == "LLM":
         info["lost_questions_(same_prompt_answer)"] = exclude_answers,
@@ -177,15 +193,14 @@ def convert_unsupervised_to_dpr_format(args, split):
     print(f"[{args['dataset_name']}][{split}] Unsupervised dataset length (without postprocessing): {len(dataset_joined)}")
     print(f"[{args['dataset_name']}][{split}] Unsupervised dataset length (with postprocessing): {len(dataset)}")
     print(f"[{args['dataset_name']}][{split}] Lost questions (ALL): {len(dataset_joined) - len(dataset)}")
+    print(f"[{args['dataset_name']}][{split}] Lost questions (%): {100 - (len(dataset) / len(corpus) * 100)}")
+    print(f"[{args['dataset_name']}][{split}] Lost questions (Repeated documents): {repeated_documents}")
     print(f"[{args['dataset_name']}][{split}] Lost questions (empty): {empty}")
     print(f"[{args['dataset_name']}][{split}] Lost questions (document not found): {not_found}")
 
     if args["method"] == "LLM":
         info["lost_questions_(same_prompt_answer)"] = exclude_answers
         print(f"[{args['dataset_name']}][{split}] Lost questions (same prompt answer): {exclude_answers}")
-
-    if len(corpus) != len(dataset_joined):
-        print("[ONLY FOR TRAIN SPLIT] If the number of queries is different from the dataset length there might be an error")
 
     s = os.path.join(args["save_path"], "dpr")
     os.makedirs(s, exist_ok=True)
@@ -254,9 +269,6 @@ def convert_supervised_to_dpr_format(args, split):
 
     print(f"[{args['dataset_name']}][{split}] Number of queries: {len(qrels)}")
     print(f"[{args['dataset_name']}][{split}] Dataset length: {len(dataset)}")
-    
-    if len(qrels) != len(dataset):
-        print("[ONLY FOR TRAIN SPLIT] If the number of queries is different from the dataset length there might be an error")
     
     s = os.path.join(args["save_path"], "dpr")
     os.makedirs(s, exist_ok=True)

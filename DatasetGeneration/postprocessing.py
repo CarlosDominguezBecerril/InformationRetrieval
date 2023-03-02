@@ -7,20 +7,20 @@ if __name__ == "__main__":
     save_folder_supervised = "supervised_datasets"
     save_folder_unsupervised = "unsupervised_datasets"
 
-    use_dpr_format = False # True -> Uses DPR format. False -> Beir format
+    use_dpr_format = True # True -> Uses DPR format. False -> Beir format
 
     splits = ["train"] # Possible values: "train", "dev", "test"
 
-    method = "cropping" # Possible: [cropping, LLM, supervised]
-    dataset_name = "scifact"
+    method = "LLM" # Possible: [cropping, LLM, supervised]
+    dataset_name = "msmarco"
     download_datasets.download_dataset(dataset_name) # You can download all the datasets by calling "download_all_datasets()"
 
     # Only for LLM
-    model_name = "facebook/opt-125m"
+    model_name = "facebook/opt-350m"
     # answers to exclude that are part of the prompt
 
     exclude_answers = ["Is a little caffeine ok during pregnancy?", "What fruit is native to Australia?", "How large is the Canadian military?"]
-    exclude_answers = set([ex_an.lower().strip for ex_an in exclude_answers])
+    exclude_answers = set([ex_an.lower().strip() for ex_an in exclude_answers])
 
     # Create the save folder
     if method == "supervised":
