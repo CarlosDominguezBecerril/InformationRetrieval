@@ -4,13 +4,11 @@ import json
 
 def check_errors(args):
 
-    splits = ["train", "dev"]
-
     save_name = f"LLM_{args['model_name']}".replace("/", "_")
 
     save_path = os.path.join(args["save_folder"], args["dataset_name"], save_name)
 
-    for split in splits:
+    for split in args["splits"]:
         shards = []
         save_split_path = os.path.join(save_path, split)
 
@@ -40,14 +38,16 @@ def check_errors(args):
                     p = os.path.join(save_split_path, "metadata")
                     metadata_path = f"{p}/metadata_{shard_id}.json"
                     os.system(f"rm {metadata_path}")
-
+        else:
+            print(f"The {split} split looks good")
 
 
 if __name__ == "__main__":
 
-    model_name = "facebook/opt-2.7b"
+    model_name = "facebook/opt-6.7b"
     dataset_name = "msmarco"
     save_folder = "unsupervised_datasets"
+    splits = ["train"]
 
     delete = False
 
@@ -56,6 +56,7 @@ if __name__ == "__main__":
         "dataset_name": dataset_name,
         "save_folder": save_folder,
         "delete": delete,
+        "splits": splits,
     }
 
     check_errors(args)
