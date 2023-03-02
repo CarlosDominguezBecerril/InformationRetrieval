@@ -22,18 +22,19 @@ def create_slurm_file(args, process_id, jobs_list, split):
 
     save_path = os.path.join(args["save_path"], split, "output_and_error_files")
 
-    slurm_file = f"""#!/bin/bash
+    slurm_file = f"""#!/bin/tcsh
 #SBATCH --job-name=preprocess_dataset_{args["dataset_name"]}_{process_id}
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=10-00:00:00
-#SBATCH --mem=32GB
+#SBATCH --mem=20GB
 #SBATCH --gres=gpu:1
 #SBATCH --output={save_path}/output_{process_id}.txt
 #SBATCH --error={save_path}/error_{process_id}.txt
-# Activamos el entorno virtual que necesitemos
-source /tartalo01/users/cdominguez019/tfm_carlos/bin/activate
+
+source ~/.tcshrc
+
 # LLamamos a nuestro script de python
 srun python3 ./LLM_method/generate_queries.py \\
         --shard_list {jobs_list} \\
