@@ -105,7 +105,7 @@ def convert_unsupervised_to_beir_format(args, split):
 
             valid += 1
 
-            split_content.write(f"{queries[-1]['_id']}\t{(corpus[example[document_key]]['_id'])}\t0\n")
+            split_content.write(f"{queries[-1]['_id']}\t{(corpus[example[document_key]]['_id'])}\t1\n")
 
     info = {
         "corpus_length": len(corpus),
