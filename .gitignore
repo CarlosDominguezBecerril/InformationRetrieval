@@ -31,3 +31,7 @@ __pycache__
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
+README.md
+
+!.README.md

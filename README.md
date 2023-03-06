@@ -67,73 +67,9 @@ The format should be one dictionary per line with the following keys:
 
 # Training
 
-CURRENTLY CLEANING THE CODE TO MAKE IT EASIER TO USE. IT MIGHT NOT WORK THE FOLLOWING.
-
-Once the dataset is created, training the system is easy.
-
-## DPR
-
-Inside the **DPR** folder execute:
-
-```
-python train.py
-```
-
-Make sure that the parameters are set correctly according to what you generated during the dataset generation, and update other parameters such as batch size.
-
-You can also evaluate on BEIR by updating the 'beir_datasets' variable.
-
-## Contriever
-
-Inside the **Contriever** folder execute:
-
-```
-python train.py
-```
-
-Make sure that the parameters are set correctly according to what you generated during the dataset generation, and update other parameters such as batch size.
-
-You can also evaluate on BEIR by updating the 'beir_datasets' variable.
-
 # Evaluation (BEIR)
 
-Ideally, you should set up the datasets you want to evaluate while training. If you forget to add a dataset, you can evaluate it by running the following command in the BEIR folder:
-
-
-```
-python eval.py
-```
-
-In the eval.py file, comment out everything inside ```if __name__ == "__main__":``` and uncomment the last comment. Then, update the parameters to match your model.
-
 # Results
-
-BEIR benchmark rasults.
-
-|   | DPR supervised (ms marco)| GenQ (Supervised) | BM25 (Unsupervised) | LaPraDoR (Unsupervised)  | Contriever (Unsupervised) | ours (Unsupervised)  |
-|---|--------------------------|------|------|----------|-----------|---------------|
-| Average | 37.07 | **42.49** | 43.01 | 30.21 | 37.06 | 33.31 |
-| MS-MARCO | 27.75 | **40.80** | 22.80 | - | 20.60 | **22.88** |
-| TREC-covid | 58.90 | **61.90** | 65.60 | 22.70 | 27.40 | 37.50 |
-| NFCorpus | 26.98 | **31.90** | 32.50 | 31.10 | 31.70 | 29.25 |
-| NaturalQuestions | 31.93 | **35.80** | 32.90 | 18.10 | 25.40 | 24.63 |
-| HotpotQA | 40.45 | **53.40** | 60.30 | 30.30 | 48.10 | 38.52 |
-| FiQA | 22.61 | **30.80** | 23.60 | 20.30 | 24.50 | 22.21 |
-| ArguAna | 45.25 | **49.30** | 31.50 | 45.90 | 37.90 | 47.32 |
-| Tóuche-2020 | **19.17** | 18.20 | 36.70 | 9.40 | 19.30 | 14.39 |
-| CQAdupstack | 27.46 | **34.70** | 29.90 | 22.00 | 28.40 | 24.64 |
-| Quora | 77.59 | **83.00** | 78.90 | 78.70 | 83.50 | 75.27 |
-| DBpedia | 29.77 | **32.80** | 31.30 | 25.00 | 29.20 | 25.57 |
-| Scidocs | 12.87 | **14.30** | 15.80 | 13.30 | 14.90 | 11.21 |
-| Fever | 56.25 | **66.90** | 75.30 | 36.80 | 68.20 | 50.46 |
-| Climate-fever | 16.89 | **17.50** | 21.30 | 13.80 | 15.50 | 13.01 |
-| Scifact | 52.92 | **64.40** | 66.50 | 55.50 | 64.90 | 52.35 |
-
-
-Notes:
-
-- Unfortunately, due to Contriever being trained on a different dataset, the results are not fully comparable. Although our system performs worse, the difference in performance is not significant as Contriever was trained on 1,024,000,000 examples, while our system was trained on only 32,000,000 examples.
-- GenQ trains a T5 (base) model using MS MARCO to generate questions. Then, for each dataset, it generates five questions using the recently trained model and finally trains a TAS-B bi-encoder model for each dataset (domain adaptation).
 
 # Pretrained models
 
@@ -141,6 +77,5 @@ Pretrained models and datasets are available under request.
 
 # Information about the project
 
-- Type of project: End of master's project.
 - Author: Carlos Domínguez Becerril.
 - Supervisors: Eneko Agirre Bengoa and Gorka Azkune Galparsoro
