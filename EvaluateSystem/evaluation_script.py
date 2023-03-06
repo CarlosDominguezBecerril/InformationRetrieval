@@ -83,7 +83,10 @@ if __name__ == "__main__":
     parser.add_argument("--similarity", type=str)
     args, _ = parser.parse_known_args()
 
-    model = DRES(models.SentenceBERT(args.model_path), batch_size=256, corpus_chunk_size=512*9999)
+    if args.similarity == "dot_score":
+        args.similarity = "dot"
+
+    model = DRES(models.SentenceBERT(args.model_path), batch_size=512, corpus_chunk_size=512*9999)
     retriever = EvaluateRetrieval(model, score_function=args.similarity)
     args.retriever = retriever
 

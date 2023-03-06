@@ -14,7 +14,7 @@ def create_slurm(args):
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=10-00:00:00
-#SBATCH --mem=32GB
+#SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
 #SBATCH --output={args.beir_save_path}/output_and_error_files/output.txt
 #SBATCH --error={args.beir_save_path}/output_and_error_files/error.txt
