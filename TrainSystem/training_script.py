@@ -28,7 +28,7 @@ def train(args):
     dev_corpus, dev_queries, dev_qrels = None, None, None
     if args.use_dev:
         print(f"Dev path: {args.data_path_dev}")
-        dev_corpus, dev_queries, dev_qrels = GenericDataLoader(args.data_path_dev).load(split="train")
+        dev_corpus, dev_queries, dev_qrels = GenericDataLoader(args.data_path_dev).load(split="dev")
         print(f"Corpus length: {len(dev_corpus)}. Queries length: {len(dev_queries)}. qrels length: {len(dev_qrels)}")
 
     #### Provide any sentence-transformers or HF model
@@ -56,7 +56,7 @@ def train(args):
    
     if args.use_dev:
         #### Prepare dev evaluator
-        ir_evaluator = retriever.load_ir_evaluator(dev_corpus, dev_queries, dev_qrels)
+        ir_evaluator = retriever.load_ir_evaluator(dev_corpus, dev_queries, dev_qrels, dev_batch_size=args.batch_size, main_score_function=args.similarity)
     else:
         #### If no dev set is present from above use dummy evaluator
         ir_evaluator = retriever.load_dummy_evaluator()

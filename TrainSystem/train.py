@@ -15,7 +15,7 @@ def create_slurm(args):
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --time=10-00:00:00
-#SBATCH --mem=32GB
+#SBATCH --mem=48GB
 #SBATCH --gres=gpu:1
 #SBATCH --output={args["save_path"]}/output_and_error_files/output.txt
 #SBATCH --error={args["save_path"]}/output_and_error_files/error.txt
@@ -53,18 +53,18 @@ if __name__ == "__main__":
     save_folder = "output"
 
     # For selecting the appropiate dataset
-    method = "LLM" # Possible values: [supervised, LLM, cropping]
+    method = "cropping" # Possible values: [supervised, LLM, cropping]
     dataset_name = "msmarco"
-    model_name = "facebook/opt-6.7b"
+    model_name = "facebook/opt-13b"
 
     # pre-trained model use for training
     pretrained_model_name = "distilbert-base-uncased"
     pretrained_model_path = "distilbert-base-uncased"
 
-    similarity = "dot" # "dot" or "cos_sim"
+    similarity = "cos_sim" # "dot_score" or "cos_sim"
 
-    epochs = 1
-    batch_size = 16
+    epochs = 10
+    batch_size = 256
     use_dev = True
     dev_supervised = True
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
 
     # Create the save folder
-    save_name = f"{dataset_name}_{method}{'_' + model_name if method == 'LLM' else ''}_pretrained_on_{pretrained_model_name}".replace("/", "_")
+    save_name = f"{similarity}_{dataset_name}_{method}{'_' + model_name if method == 'LLM' else ''}_pretrained_on_{pretrained_model_name}".replace("/", "_")
 
     save_path = os.path.join(save_folder, dataset_name, save_name)
 
