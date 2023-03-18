@@ -21,7 +21,8 @@ def preprocess_output(string, start_point):
     return string[:first_new_line].strip()
 
 def generate_questions(args, shard_id, model, tokenizer, prompt_info, batch_size):
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     ds = DocumentStore(f"{os.path.join(os.path.dirname(args.save_path), 'shards', args.split)}/shard_{shard_id}.json")
     dl = DataLoader(ds, batch_size=batch_size, num_workers=8, shuffle=False)
@@ -57,6 +58,7 @@ def generate_questions(args, shard_id, model, tokenizer, prompt_info, batch_size
 
         outputs = batch
         try:
+            # print(examples, [[outputs["document"][i]] for i in range(len(outputs["document"]))])
             current_information = [[outputs["document"][i]] for i in range(len(outputs["document"]))]
             for step in range(prompt_info["steps"]):
                 prompt = prompt_info[str(step)]["prompt"]
@@ -80,7 +82,8 @@ def generate_questions(args, shard_id, model, tokenizer, prompt_info, batch_size
             for i in range(len(generate_ids)):
                 output_dataset.append({
                     "query": current_information[i][-1],
-                    "document": outputs["document"][i],
+                    "document": outputs["original_document"][i],
+                    "document_processed": outputs["document"][i],
                 })
         except Exception as e:
             print(f"ERROR: {e}", flush=True)

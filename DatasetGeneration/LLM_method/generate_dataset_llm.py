@@ -7,7 +7,7 @@ def create_folders(args, split="train"):
     # Create the folder for the shards
     shards_path = os.path.join(os.path.dirname(args["save_path"]), "shards", split)
     if not os.path.exists(shards_path):
-        os.makedirs(shards_path, exist)
+        os.makedirs(shards_path, exist_ok=True)
 
     # Create the folder for the split
     save_path = os.path.join(args["save_path"], split)
