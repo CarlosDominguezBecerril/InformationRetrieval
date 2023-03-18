@@ -10,7 +10,7 @@ def create_folders(args):
 def create_slurm(args):
     
     slurm_file = f"""#!/bin/tcsh
-#SBATCH --job-name=train_dpr
+#SBATCH --job-name=train_dpr_{args["method"]}_{args["dataset_name"]}
 #SBATCH --cpus-per-task=8
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -27,6 +27,7 @@ srun python3 /gscratch3/users/cdominguez019/PhD/InformationRetrieval/TrainSystem
         --data_path_train {args["dataset_path_train"]} \\
         --data_path_dev {args["dataset_path_dev"]} \\
         --model_name {args["pretrained_model_name"]} \\
+        --model_path {args["pretrained_model_path"]} \\
         --batch_size {args["batch_size"]} \\
         --model_save_path {args["save_path"]}/model_output \\
         --epochs {args["epochs"]} \\
@@ -50,16 +51,16 @@ srun python3 /gscratch3/users/cdominguez019/PhD/InformationRetrieval/EvaluateSys
 
 if __name__ == "__main__":
 
-    save_folder = "output"
+    save_folder = "output/domain_adaptation"
 
     # For selecting the appropiate dataset
-    method = "cropping" # Possible values: [supervised, LLM, cropping]
-    dataset_name = "msmarco"
-    model_name = "facebook/opt-13b"
+    method = "LLM" # Possible values: [supervised, LLM, cropping]
+    dataset_name = "fever"
+    model_name = "facebook/opt-2.7b"
 
     # pre-trained model use for training
-    pretrained_model_name = "distilbert-base-uncased"
-    pretrained_model_path = "distilbert-base-uncased"
+    pretrained_model_name = "cos_sim_ms_marco_supervised_pretrained_on_distilbert-base-uncased"
+    pretrained_model_path = "./output/msmarco/cos_sim_msmarco_supervised_pretrained_on_distilbert-base-uncased/model_output/"
 
     similarity = "cos_sim" # "dot_score" or "cos_sim"
 
@@ -69,7 +70,7 @@ if __name__ == "__main__":
     dev_supervised = True
 
     # Evaluation
-    beir_datasets = ["all"] # list of str. if beir_datasets is ["all"] all beir is checked
+    beir_datasets = [dataset_name] # list of str. if beir_datasets is ["all"] all beir is checked
     beir_datasets_path = "../DatasetGeneration/datasets/"
 
 
@@ -92,13 +93,16 @@ if __name__ == "__main__":
         dataset_path_dev = f"../DatasetGeneration/unsupervised_datasets/{dataset_name}/{method}{'_' + model_name.replace('/', '_') if method == 'LLM' else ''}/beir/"
 
 
-    beir_save_path = f"../EvaluateSystem/output/{save_name}"
+    beir_save_path = f"../EvaluateSystem/output/domain_adapatation/{save_name}"
 
     args = {
+        "method": method,
+        "dataset_name": dataset_name,
         "dataset_path_train": dataset_path_train,
         "dataset_path_dev": dataset_path_dev,
         "save_path": save_path,
         "pretrained_model_name": pretrained_model_name,
+        "pretrained_model_path": pretrained_model_path,
         "batch_size": batch_size,
         "epochs": epochs,
         "use_dev": use_dev,

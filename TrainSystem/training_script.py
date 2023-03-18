@@ -33,7 +33,7 @@ def train(args):
 
     #### Provide any sentence-transformers or HF model
 
-    word_embedding_model = models.Transformer(args.model_name, max_seq_length=256)
+    word_embedding_model = models.Transformer(args.model_path, max_seq_length=256)
     pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
     model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
@@ -83,6 +83,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_path_train", type=str)
     parser.add_argument("--data_path_dev", type=str)
     parser.add_argument("--model_name", type=str, default="distilbert-base-uncased")
+    parser.add_argument("--model_path", type=str, default="distilbert-base-uncased")
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--model_save_path", type=str)
     parser.add_argument("--epochs", type=int)
@@ -96,5 +97,15 @@ if __name__ == "__main__":
         use_dev = True
     
     args.use_dev = use_dev
+
+    print("data_path_train:", args.data_path_train)
+    print("data_path_dev:", args.data_path_dev)
+    print("model_name:", args.model_name)
+    print("model_path:", args.model_path)
+    print("batch_size:", args.batch_size)
+    print("model_save_path:", args.model_save_path)
+    print("epochs:", args.epochs)
+    print("similarity:", args.similarity)
+    print("use_dev:", args.use_dev)
 
     train(args)
