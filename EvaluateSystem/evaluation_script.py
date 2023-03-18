@@ -15,6 +15,8 @@ import numpy as np
 
 import json
 
+import glob
+
 #### Just some code to print debug information to stdout
 logging.basicConfig(format='%(asctime)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
