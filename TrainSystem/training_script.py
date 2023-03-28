@@ -32,18 +32,31 @@ def train(args):
         print(f"Corpus length: {len(dev_corpus)}. Queries length: {len(dev_queries)}. qrels length: {len(dev_qrels)}")
 
     #### Provide any sentence-transformers or HF model
+    if args.reload_model:
+        print("Reloading the model")
+        model = SentenceTransformer(args.model_path_1)
+    else:
+        if args.is_dpr:
+            query_embedding_model = models.Transformer(args.model_path_1, max_seq_length=64)
+            query_pooling_model = models.Pooling(query_embedding_model.get_word_embedding_dimension())
 
-    word_embedding_model = models.Transformer(args.model_path, max_seq_length=256)
-    pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
-    model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
+            document_embedding_model = models.Transformer(args.model_path_2, max_seq_length=256)
+            document_pooling_model = models.Pooling(document_embedding_model.get_word_embedding_dimension())
+            
+            asym_model = models.Asym({'query': [query_embedding_model, query_pooling_model], 'doc': [document_embedding_model, document_pooling_model]})
+            model = SentenceTransformer(modules=[asym_model])
+        else:
+            word_embedding_model = models.Transformer(args.model_path_1, max_seq_length=256)
+            pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension())
+            model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 
     #### Or provide pretrained sentence-transformer model
     # model = SentenceTransformer("msmarco-distilbert-base-v3")
-
-    retriever = TrainRetriever(model=model, batch_size=args.batch_size)
+    sep =  " [SEP] " if args.is_dpr else " "
+    retriever = TrainRetriever(model=model, batch_size=args.batch_size, sep=sep)
 
     #### Prepare training samples
-    train_samples = retriever.load_train(corpus, queries, qrels)
+    train_samples = retriever.load_train(corpus, queries, qrels, is_dpr=args.is_dpr)
     train_dataloader = retriever.prepare_train(train_samples, shuffle=True)
 
     if args.similarity == "cos_sim":
@@ -56,7 +69,7 @@ def train(args):
    
     if args.use_dev:
         #### Prepare dev evaluator
-        ir_evaluator = retriever.load_ir_evaluator(dev_corpus, dev_queries, dev_qrels, dev_batch_size=args.batch_size, main_score_function=args.similarity)
+        ir_evaluator = retriever.load_ir_evaluator(dev_corpus, dev_queries, dev_qrels, dev_batch_size=args.batch_size, main_score_function=args.similarity, is_dpr=args.is_dpr)
     else:
         #### If no dev set is present from above use dummy evaluator
         ir_evaluator = retriever.load_dummy_evaluator()
@@ -83,12 +96,15 @@ if __name__ == "__main__":
     parser.add_argument("--data_path_train", type=str)
     parser.add_argument("--data_path_dev", type=str)
     parser.add_argument("--model_name", type=str, default="distilbert-base-uncased")
-    parser.add_argument("--model_path", type=str, default="distilbert-base-uncased")
+    parser.add_argument("--model_path_1", type=str, default="distilbert-base-uncased")
+    parser.add_argument("--model_path_2", type=str, default="distilbert-base-uncased")
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--model_save_path", type=str)
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--similarity", type=str)
     parser.add_argument("--use_dev", type=str)
+    parser.add_argument("--is_dpr", type=str)
+    parser.add_argument("--reload_model", type=str)
 
     args, _ = parser.parse_known_args()
 
@@ -98,14 +114,28 @@ if __name__ == "__main__":
     
     args.use_dev = use_dev
 
+    is_dpr = False
+    if args.is_dpr.lower() == "true":
+        is_dpr = True
+    
+    args.is_dpr = is_dpr
+
+    reload_model = False
+    if args.reload_model.lower() == "true":
+        reload_model = True
+    
+    args.reload_model = reload_model
+
     print("data_path_train:", args.data_path_train)
     print("data_path_dev:", args.data_path_dev)
     print("model_name:", args.model_name)
-    print("model_path:", args.model_path)
+    print("model_path_1:", args.model_path_1)
+    print("model_path_2 (only for DPR):", args.model_path_2)
     print("batch_size:", args.batch_size)
     print("model_save_path:", args.model_save_path)
     print("epochs:", args.epochs)
     print("similarity:", args.similarity)
     print("use_dev:", args.use_dev)
+    print("is_dpr:", args.is_dpr)
 
     train(args)
