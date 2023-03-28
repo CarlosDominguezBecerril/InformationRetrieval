@@ -64,7 +64,7 @@ def evaluate_dataset(dataset_name, args):
 
     metrics = {key: 100 * np.mean(value) for key, value in metrics.items()}
 
-    with open(f"{args.beir_save_path}/results/{dataset_name}_results.json", "w") as json_file:
+    with open(f"{args.beir_save_path}/results/{dataset_name.replace('/', '_')}_results.json", "w") as json_file:
         json.dump(metrics, json_file)
     
     print(f"Dataset: {dataset}")
@@ -83,12 +83,21 @@ if __name__ == "__main__":
     parser.add_argument("--beir_save_path", type=str)
     parser.add_argument("--model_path", type=str)
     parser.add_argument("--similarity", type=str)
+    parser.add_argument("--is_dpr", type=str)
+
     args, _ = parser.parse_known_args()
+
+    is_dpr = False
+    if args.is_dpr.lower() == "true":
+        is_dpr = True
+    
+    args.is_dpr = is_dpr
 
     if args.similarity == "dot_score":
         args.similarity = "dot"
 
-    model = DRES(models.SentenceBERT(args.model_path), batch_size=512, corpus_chunk_size=512*9999)
+    sep =  " [SEP] " if args.is_dpr else " "
+    model = DRES(models.SentenceBERT(args.model_path, sep=sep, is_dpr=args.is_dpr), batch_size=512, corpus_chunk_size=512*9999)
     retriever = EvaluateRetrieval(model, score_function=args.similarity)
     args.retriever = retriever
 

@@ -28,7 +28,8 @@ srun python3 /gscratch3/users/cdominguez019/PhD/InformationRetrieval/EvaluateSys
         --beir_datasets_path {args.beir_datasets_path} \\
         --beir_save_path {args.beir_save_path} \\
         --similarity {args.similarity} \\
-        --model_path {args.model_path}""".replace(",", "").replace("[", "").replace("]", "")
+        --model_path {args.model_path} \\
+        --is_dpr {args.is_dpr}""".replace(",", "").replace("[", "").replace("]", "")
 
     slurm_path = f"{args.beir_save_path}/output_and_error_files/tmp.slurm"
     with open(slurm_path, "w") as f:
@@ -59,6 +60,7 @@ if __name__ == "__main__":
     parser.add_argument("--beir_save_path", type=str)
     parser.add_argument("--model_path", type=str)
     parser.add_argument("--similarity", type=str)
+    parser.add_argument("--is_dpr", type=str)
     args, _ = parser.parse_known_args()
 
     print("BEIR Evaluation")
@@ -66,5 +68,6 @@ if __name__ == "__main__":
     print("BEIR datasets path:", args.beir_datasets_path)
     print("BEIR save path:", args.beir_save_path)
     print("BEIR model path:", args.model_path)
+    print("Model DPR:", args.is_dpr)
 
     evaluate_datasets(args)
