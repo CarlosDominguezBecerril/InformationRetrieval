@@ -28,7 +28,7 @@ def train(args):
     dev_corpus, dev_queries, dev_qrels = None, None, None
     if args.use_dev:
         print(f"Dev path: {args.data_path_dev}")
-        dev_corpus, dev_queries, dev_qrels = GenericDataLoader(args.data_path_dev).load(split="dev")
+        dev_corpus, dev_queries, dev_qrels = GenericDataLoader(args.data_path_dev).load(split="test")
         print(f"Corpus length: {len(dev_corpus)}. Queries length: {len(dev_queries)}. qrels length: {len(dev_qrels)}")
 
     #### Provide any sentence-transformers or HF model
@@ -53,10 +53,10 @@ def train(args):
     #### Or provide pretrained sentence-transformer model
     # model = SentenceTransformer("msmarco-distilbert-base-v3")
     sep =  " [SEP] " if args.is_dpr else " "
-    retriever = TrainRetriever(model=model, batch_size=args.batch_size, sep=sep)
+    retriever = TrainRetriever(model=model, batch_size=args.batch_size, sep=sep, is_dpr=args.is_dpr)
 
     #### Prepare training samples
-    train_samples = retriever.load_train(corpus, queries, qrels, is_dpr=args.is_dpr)
+    train_samples = retriever.load_train(corpus, queries, qrels)
     train_dataloader = retriever.prepare_train(train_samples, shuffle=True)
 
     if args.similarity == "cos_sim":
@@ -69,7 +69,7 @@ def train(args):
    
     if args.use_dev:
         #### Prepare dev evaluator
-        ir_evaluator = retriever.load_ir_evaluator(dev_corpus, dev_queries, dev_qrels, dev_batch_size=args.batch_size, main_score_function=args.similarity, is_dpr=args.is_dpr)
+        ir_evaluator = retriever.load_ir_evaluator(dev_corpus, dev_queries, dev_qrels, dev_batch_size=args.batch_size, main_score_function=args.similarity)
     else:
         #### If no dev set is present from above use dummy evaluator
         ir_evaluator = retriever.load_dummy_evaluator()

@@ -56,30 +56,30 @@ srun python3 /gscratch3/users/cdominguez019/PhD/InformationRetrieval/EvaluateSys
 if __name__ == "__main__":
     
     # Shared_weights
-    is_dpr = True
-    domain_adaptation = True
+    is_dpr = False
+    domain_adaptation = False
 
     save_folder = f"output{'/dpr' if is_dpr else ''}{'/domain_adaptation' if domain_adaptation else ''}"
 
     # For selecting the appropiate dataset
-    method = "LLM" # Possible values: [supervised, LLM, cropping]
-    dataset_name = "hotpotqa"
+    method = "supervised" # Possible values: [supervised, LLM, cropping]
+    dataset_name = "scifact"
     model_name = "facebook/opt-2.7b"
 
     # pre-trained model use for training
-    reload_model = True
+    reload_model = False
     # if you want to fine-tune a sentence transformer you need to only set-up pretrainer_model_path1
 
-    pretrained_model_name = "cos_sim_dpr_ms_marco_supervised_pretrained_on_distilbert-base-uncased"
-    pretrained_model_path_1 = "./output/dpr/msmarco/cos_sim_dpr_msmarco_supervised_pretrained_on_distilbert-base-uncased/model_output/"
+    pretrained_model_name = "distilbert-base-uncased"
+    pretrained_model_path_1 = "distilbert-base-uncased"
     pretrained_model_path_2 = "distilbert-base-uncased"
 
     similarity = "cos_sim" # "dot_score" or "cos_sim"
 
-    epochs = 10
+    epochs = 1
     batch_size = 256
     use_dev = True
-    dev_supervised = False
+    dev_supervised = True
 
     # Evaluation
     beir_datasets = [dataset_name] # list of str. if beir_datasets is ["all"] all beir is checked
