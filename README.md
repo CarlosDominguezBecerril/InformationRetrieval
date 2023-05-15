@@ -3,8 +3,7 @@
 The repository pertains to the field of Information Retrieval and focuses on the implementation of an unsupervised question generation method for the purpose of information retrieval. It encompasses the following processes:
 
 - Generation of questions through an unsupervised approach.
-- Training of a dense passage retrieval system (DPR) using the generated questions as a basis. (Using haystack https://github.com/deepset-ai/haystack)
-- Training of the contriever system using the generated questions. (https://github.com/facebookresearch/contriever).
+- Training of a passage retrieval system using the generated questions as a basis. (Using beir https://github.com/beir-cellar/beir)
 - Evaluation of the system using the benchmarked evaluation method BEIR. (https://github.com/beir-cellar/beir)
 
 
@@ -86,10 +85,6 @@ Ideally, you should set up the datasets you want to evaluate while training. If 
 python evaluate_beir.py
 ```
 
-# Results
-
-Coming soon.
-
 # Pretrained models and datasets
 
 Pretrained models and datasets are available under request.
@@ -97,4 +92,4 @@ Pretrained models and datasets are available under request.
 # Information about the project
 
 - Author: Carlos Domínguez Becerril.
-- Supervisors: Eneko Agirre Bengoa and Gorka Azkune Galparsoro
+- Supervisors: Eneko Agirre Bengoa, Jon Ander Campos Gorka Azkune Galparsoro
